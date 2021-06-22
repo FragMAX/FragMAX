@@ -93,6 +93,7 @@ def delete(_, id):
     return HttpResponse(f"ok")
 
 
+# TODO: remove me!
 def update_library(request):
     """
     GET requests show the 'Create new Project' page

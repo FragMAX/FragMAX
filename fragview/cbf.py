@@ -5,6 +5,8 @@ from fragview.fileio import makedirs
 from fragview.projects import project_fragmax_dir, project_raw_protein_dir, project_process_protein_dir
 
 
+# TODO: port this code to deliver data-sets meta-data
+# TODO: to the code that creates DataSet database entries
 def generate_meta_xml_files(project):
     raw_cbf_folder = project_raw_protein_dir(project)
     fragmax_dir = project_fragmax_dir(project)

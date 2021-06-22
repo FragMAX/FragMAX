@@ -209,6 +209,7 @@ class ProjectForm(Form):
         )
 
 
+# TODO: remove me!
 class NewLibraryForm(Form):
     model = None
 
