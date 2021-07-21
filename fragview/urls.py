@@ -77,7 +77,6 @@ urlpatterns = [
     path("projects/", projects.show, name="manage_projects"),
     path("project/new", projects.new, name="new_project"),
     path("project/<int:id>", projects.delete),
-    path("project/update_library", projects.update_library, name="update_library"),
     path("project/current/<int:id>/", projects.set_current),
     # encryption key management views
     path("encryption/", encryption.show, name="encryption"),
@@ -95,8 +94,6 @@ urlpatterns = [
     path("download/pandda", download.pandda),
     # generated PDB access views
     path("pdbs/refined/<result_id>", result_pdbs.refined),
-    # TODO: remove url below?
-    path("pdbs/final/<dataset>/<process>/<refine>", result_pdbs.final),
     path("pdbs/ligand/<result_id>", result_pdbs.ligand),
     path("pdbs/pandda/fitted/<dataset>/<method>", result_pdbs.pandda_fitted),
     path("pdbs/pandda/input/<dataset>/<method>", result_pdbs.pandda_input),

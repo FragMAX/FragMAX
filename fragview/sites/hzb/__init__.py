@@ -47,11 +47,6 @@ class SitePlugin(plugin.SitePlugin):
     def get_group_name(self, project):
         return project.proposal
 
-    def create_meta_files(self, project):
-        from fragview.cbf import generate_meta_xml_files
-
-        return list(generate_meta_xml_files(project))
-
     def prepare_project_folders(self, project, shifts):
         from fragview.projects import project_process_protein_dir
 

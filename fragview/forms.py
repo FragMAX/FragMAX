@@ -207,10 +207,3 @@ class ProjectForm(Form):
             cdata["autoproc"],
             cdata["encrypted"],
         )
-
-
-# TODO: remove me!
-class NewLibraryForm(Form):
-    model = None
-
-    fragments_file = FileField(required=False)

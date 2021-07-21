@@ -380,11 +380,6 @@ def project_raw_protein_dir(project):
     return protein_dir(project.proposal, project.shift, project.protein)
 
 
-def project_shift_dirs(project):
-    for shift in project.shifts():
-        yield shift_dir(project.proposal, shift)
-
-
 # TODO: remove me
 def project_fragmax_dir(project):
     return path.join(project.data_path(), "fragmax")

@@ -40,9 +40,6 @@ class SitePlugin:
         """
         raise NotImplementedError()
 
-    def create_meta_files(self, project):
-        raise NotImplementedError()
-
     def prepare_project_folders(self, project, shifts):
         raise NotImplementedError()
 
