@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Iterable
 from os import path, walk
 from pathlib import Path
 from datetime import datetime
-from fragview.fileio import subdirs
-from fragview.fileio import makedirs
+from django.conf import settings
 from fragview.sites import plugin
-from fragview.sites.plugin import Pipeline, LigandTool
+from fragview.sites.plugin import Pipeline, LigandTool, DatasetMetadata
+from fragview.sites.hzb.cbf import parse_metadata
 from fragview.sites.hzb.project import ProjectLayout
 from fragview.sites.hzb.diffractions import get_diffraction_pic_command
 from fragview.sites.hzb.pipelines import PipelineCommands
@@ -15,20 +15,40 @@ from fragview.sites.hzb.hpc import HPC
 # filename suffix for a dataset's master image file
 MASTER_IMG_SUFFIX = "_0001.cbf"
 
+# max number of dataset runs we'll look for
+MAX_RUNS = 8
+
 
 class SitePlugin(plugin.SitePlugin):
     NAME = "Helmholtz-Zentrum Berlin"
     LOGO = "hzb.png"
-    DISABLED_FEATURES = ["soaking_plan", "download"]
+    DISABLED_FEATURES = ["soaking_plan", "download", "proposals", "autoproc_import"]
     AUTH_BACKEND = "fragview.auth.LocalBackend"
     RAW_DATA_DIR = "/data/fragmaxrpc/user"
     HPC_JOBS_RUNNER = "local"
 
+    def get_project_dir(self, project) -> Path:
+        return Path(settings.PROJECTS_ROOT_DIR, project.proposal, "fragmax")
+
+    def get_project_dataset_dirs(self, project) -> Iterable[Path]:
+        protein_dir = Path(self.get_project_dir(project).parent, "raw", project.protein)
+        return protein_dir.iterdir()
+
+    def get_dataset_runs(self, data_dir: Path) -> Iterable[int]:
+        prefix = f"{data_dir.name}_"
+        postfix = "_0001.cbf"
+        for master_file in data_dir.glob(f"{prefix}*{postfix}"):
+            run_num = master_file.name[len(prefix) : -len(postfix)]
+            yield int(run_num)
+
+    def get_dataset_metadata(
+        self, project, dataset_dir: Path, crystal_id: str, run: int
+    ) -> DatasetMetadata:
+        cbf_file = Path(dataset_dir, f"{project.protein}-{crystal_id}_{run}_0001.cbf")
+        return parse_metadata(cbf_file)
+
     def get_project_experiment_date(self, project):
         return _get_experiment_timestamp(project)
-
-    def get_project_datasets(self, project):
-        return _get_datasets(project)
 
     def get_project_layout(self):
         return ProjectLayout()
@@ -46,15 +66,6 @@ class SitePlugin(plugin.SitePlugin):
 
     def get_group_name(self, project):
         return project.proposal
-
-    def prepare_project_folders(self, project, shifts):
-        from fragview.projects import project_process_protein_dir
-
-        root_dir = project_process_protein_dir(project)
-
-        for dataset in self.get_project_datasets(project):
-            dataset_dir, _ = dataset.rsplit("_", 2)
-            makedirs(path.join(root_dir, dataset_dir, dataset))
 
     def dataset_master_image(self, dataset):
         return f"{dataset}{MASTER_IMG_SUFFIX}"
@@ -103,26 +114,3 @@ def _get_experiment_timestamp(project):
 
     timestamp = path.getmtime(_find_path())
     return datetime.fromtimestamp(timestamp)
-
-
-def _get_datasets(project):
-    def _file_to_dataset_name(file):
-        # to get dataset name, chop off the
-        # _0001.cbf suffix
-        return file.name[: -len(MASTER_IMG_SUFFIX)]
-
-    from fragview.projects import project_raw_protein_dir
-
-    #
-    # for each subdirectory in 'raw' directory,
-    # look for dataset master image files, i.e. files
-    # with names like <protein>..._0001.cbf,
-    # derive dataset name from master image file name
-    #
-
-    raw = Path(project_raw_protein_dir(project))
-    glob_exp = f"{project.protein}*{MASTER_IMG_SUFFIX}"
-
-    for dset_dir in subdirs(raw, 1):
-        for img_file in dset_dir.glob(glob_exp):
-            yield _file_to_dataset_name(img_file)
